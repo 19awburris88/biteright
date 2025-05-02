@@ -1,12 +1,26 @@
-# React + Vite
+# BiteRight 🍽️
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+BiteRight is a mobile-first restaurant matchmaker app built for Dallas food lovers.  
+Swipe through dishes you love, and get curated restaurant recommendations that match your taste.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🔥 Features
 
-## Expanding the ESLint configuration
+- Swipe left/right on real dishes to build your taste profile
+- Personalized restaurant matches based on dish preferences
+- Mobile-first UI with custom branding and smooth animations
+- Profile management: ZIP code, price range, and dietary tags
+- Modern, clean stack using React, Express, PostgreSQL & Prisma
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+---
+
+## 🧱 Tech Stack
+
+| Layer       | Tools Used                       |
+|------------|----------------------------------|
+| Frontend   | React + Vite + Material UI (MUI) |
+| Backend    | Node.js + Express                |
+| Database   | PostgreSQL + Prisma ORM          |
+| Styling    | Custom theme with burnt orange + cream tones |
+| Swiping    | `react-swipeable` (gesture support) |
