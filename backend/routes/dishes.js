@@ -1,14 +1,19 @@
-// GET /api/dishes/random
+import express from 'express';
+import { PrismaClient } from '@prisma/client';
+
+const router = express.Router();
+const prisma = new PrismaClient();
+
 router.get('/random', async (req, res) => {
-    try {
-      const dishes = await prisma.dish.findMany({
-        take: 30,
-        orderBy: { id: 'asc' }, // optional: randomize or shuffle client-side
-      });
-      res.json(dishes);
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: 'Failed to fetch dishes' });
-    }
-  });
-  
+  try {
+    const allDishes = await prisma.dish.findMany();
+    const shuffled = allDishes.sort(() => 0.5 - Math.random());
+    const selected = shuffled.slice(0, 30);
+    res.json(selected);
+  } catch (err) {
+    console.error('[GET /api/dishes/random] Error:', err);
+    res.status(500).json({ error: 'Failed to fetch random dishes' });
+  }
+});
+
+export default router;
