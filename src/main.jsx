@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import { ThemeProvider } from '@mui/material/styles';
-import { theme } from './theme'; // 👈 Import your custom theme
+import { theme } from './theme.jsx'; // 👈 Import your custom theme
 import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
