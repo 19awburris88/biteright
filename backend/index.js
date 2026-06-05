@@ -5,7 +5,11 @@ dotenv.config();
 
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { PrismaClient } from '@prisma/client';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Route imports
 import dishesRouter from './routes/dishes.js';
@@ -26,10 +30,18 @@ app.use('/api/restaurants', restaurantsRouter);
 app.use('/api/swipes', swipesRouter);
 app.use('/api/user', userRouter);
 
-// Health check
-app.get('/', (req, res) => {
-  res.send('🔥 BiteRight backend is running');
-});
+// Serve React build in production
+if (process.env.NODE_ENV === 'production') {
+  const distPath = path.join(__dirname, '../dist');
+  app.use(express.static(distPath));
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
+} else {
+  app.get('/', (req, res) => {
+    res.send('BiteRight backend is running');
+  });
+}
 
 // Start server
 const PORT = process.env.PORT || 3001;
