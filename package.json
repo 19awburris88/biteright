@@ -8,7 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "postinstall": "prisma generate",
+    "postinstall": "prisma generate --schema=backend/prisma/schema.prisma",
     "start": "node backend/index.js"
   },
   "dependencies": {
