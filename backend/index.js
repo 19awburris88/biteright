@@ -30,8 +30,9 @@ app.use('/api/restaurants', restaurantsRouter);
 app.use('/api/swipes', swipesRouter);
 app.use('/api/user', userRouter);
 
-// Serve React build in production
-if (process.env.NODE_ENV === 'production') {
+// Serve React build in production (Railway sets NODE_ENV=production automatically)
+const isProduction = process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT;
+if (isProduction) {
   const distPath = path.join(__dirname, '../dist');
   app.use(express.static(distPath));
   app.get('*', (req, res) => {
