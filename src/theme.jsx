@@ -1,19 +1,25 @@
-// src/theme.jsx
 import { createTheme } from '@mui/material/styles';
 
 export const theme = createTheme({
   palette: {
+    mode: 'dark',
     primary: {
-      main: '#D35400', // Burnt orange
-    },
-    background: {
-      default: '#FFF8F0',
-    },
-    text: {
-      primary: '#1A1A1A',
+      main: '#F72545',
+      dark: '#d41e38',
     },
     secondary: {
-      main: '#F5B041',
+      main: '#FF9F1C',
+    },
+    success: {
+      main: '#22C55E',
+    },
+    background: {
+      default: '#0d0d0d',
+      paper: '#1F2937',
+    },
+    text: {
+      primary: '#F8FAFC',
+      secondary: '#64748B',
     },
   },
   typography: {
@@ -25,5 +31,17 @@ export const theme = createTheme({
     h5: { fontFamily: 'Playfair Display, serif' },
     h6: { fontFamily: 'Playfair Display, serif' },
     button: { textTransform: 'none' },
+  },
+  components: {
+    MuiChip: {
+      styleOverrides: {
+        root: { borderRadius: 8 },
+      },
+    },
+    MuiCard: {
+      styleOverrides: {
+        root: { backgroundImage: 'none' },
+      },
+    },
   },
 });

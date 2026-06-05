@@ -1,26 +1,18 @@
-import { useEffect, useState } from 'react';
-import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  CardMedia,
-  Chip,
-  Stack,
-  IconButton,
-  TextField,
-  MenuItem,
-} from '@mui/material';
+import { useEffect, useState, useRef } from 'react';
+import { Box, Typography, Chip, Stack, IconButton } from '@mui/material';
 import { useSwipeable } from 'react-swipeable';
 import CloseIcon from '@mui/icons-material/Close';
 import FavoriteIcon from '@mui/icons-material/Favorite';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import logo from '../assets/biteright-looo.png';
 
 export default function Swipe() {
   const [dishes, setDishes] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [animationClass, setAnimationClass] = useState('');
   const [selectedCuisine, setSelectedCuisine] = useState('');
+  const [isAnimating, setIsAnimating] = useState(false);
+  const swipeDirRef = useRef(null);
+  const userId = localStorage.getItem('biteright_user_id');
 
   useEffect(() => {
     async function fetchDishes() {
@@ -28,138 +20,268 @@ export default function Swipe() {
         const res = await fetch('/api/dishes/random');
         const data = await res.json();
         setDishes(data);
-      } catch (error) {
-        console.error('Error fetching dishes:', error);
+      } catch (err) {
+        console.error('Error fetching dishes:', err);
       }
     }
     fetchDishes();
   }, []);
 
   const filteredDishes = selectedCuisine
-    ? dishes.filter((dish) => dish.category === selectedCuisine)
+    ? dishes.filter((d) => d.category === selectedCuisine)
     : dishes;
 
+  const cuisines = [...new Set(dishes.map((d) => d.category).filter(Boolean))];
+
+  const recordSwipe = async (dishId, direction) => {
+    if (!userId) return;
+    try {
+      await fetch('/api/swipes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: parseInt(userId),
+          dishId,
+          swipeDirection: direction,
+        }),
+      });
+    } catch (err) {
+      console.error('Failed to record swipe:', err);
+    }
+  };
+
   const handleSwipe = (direction) => {
-    setAnimationClass(`swipe-${direction}`);
+    if (isAnimating || currentIndex >= filteredDishes.length) return;
+    const dish = filteredDishes[currentIndex];
+    swipeDirRef.current = direction;
+    setIsAnimating(true);
+    recordSwipe(dish.id, direction);
+
     setTimeout(() => {
-      setAnimationClass('');
       setCurrentIndex((prev) => prev + 1);
-    }, 400);
+      swipeDirRef.current = null;
+      setIsAnimating(false);
+    }, 320);
   };
 
   const handlers = useSwipeable({
     onSwipedLeft: () => handleSwipe('left'),
     onSwipedRight: () => handleSwipe('right'),
-    preventDefaultTouchmoveEvent: true,
+    preventScrollOnSwipe: true,
     trackTouch: true,
     trackMouse: true,
   });
-
-  if (filteredDishes.length === 0) {
-    return (
-      <Box textAlign="center" mt={10}>
-        <Typography variant="h5" color="white">Loading dishes...</Typography>
-      </Box>
-    );
-  }
-
-  if (currentIndex >= filteredDishes.length) {
-    return (
-      <Box textAlign="center" mt={10}>
-        <Typography variant="h5" color="white">You're all caught up!</Typography>
-      </Box>
-    );
-  }
 
   const dish = filteredDishes[currentIndex];
 
   return (
     <Box
-      {...handlers}
       sx={{
         bgcolor: '#0d0d0d',
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        pt: 6,
-        pb: 10,
+        pt: 4,
+        pb: 12,
         px: 2,
       }}
     >
-      <Typography variant="h4" fontWeight="bold" color="#F5B041" gutterBottom>
-        BiteRight
-      </Typography>
-      <Typography variant="subtitle1" color="#fefefe" mb={3}>
-        Swipe to find your restaurant match
-      </Typography>
+      {/* Header */}
+      <Box sx={{ width: '100%', maxWidth: 420, mb: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Box
+          component="img"
+          src={logo}
+          alt="BiteRight"
+          sx={{ height: 32, objectFit: 'contain' }}
+        />
+        <Typography variant="caption" color="#64748B">
+          Swipe to match
+        </Typography>
+      </Box>
 
-      <TextField
-        select
-        label="Filter by Cuisine"
-        value={selectedCuisine}
-        onChange={(e) => {
-          setSelectedCuisine(e.target.value);
-          setCurrentIndex(0);
+      {/* Cuisine chips */}
+      <Box
+        sx={{
+          display: 'flex',
+          gap: 1,
+          overflowX: 'auto',
+          pb: 1,
+          mb: 3,
+          width: '100%',
+          maxWidth: 420,
+          '&::-webkit-scrollbar': { display: 'none' },
         }}
-        sx={{ mb: 2, width: '100%', maxWidth: 400, bgcolor: '#fff', borderRadius: 2 }}
       >
-        <MenuItem value="">All</MenuItem>
-        {[...new Set(dishes.map((d) => d.category))].map((cuisine, i) => (
-          <MenuItem key={i} value={cuisine}>{cuisine}</MenuItem>
-        ))}
-      </TextField>
-
-      <motion.div
-        key={dish.id || dish.name}
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, x: -100 }}
-        transition={{ duration: 0.3 }}
-        style={{ width: '100%' }}
-      >
-        <Card
-          className={`swipe-card ${animationClass}`}
-          sx={{ width: '100%', maxWidth: 400, borderRadius: 3, overflow: 'hidden', mb: 3 }}
-        >
-          <CardMedia
-            component="img"
-            image={dish.imageUrl || 'https://via.placeholder.com/400x300?text=No+Image'}
-            alt={dish.name}
-            sx={{ height: 240, width: '100%', objectFit: 'cover' }}
+        <Chip
+          label="All"
+          onClick={() => { setSelectedCuisine(''); setCurrentIndex(0); }}
+          sx={{
+            bgcolor: selectedCuisine === '' ? '#F72545' : 'rgba(255,255,255,0.07)',
+            color: '#F8FAFC',
+            fontWeight: 600,
+            flexShrink: 0,
+            border: selectedCuisine === '' ? 'none' : '1px solid rgba(255,255,255,0.12)',
+            '&:hover': { bgcolor: selectedCuisine === '' ? '#d41e38' : 'rgba(255,255,255,0.1)' },
+          }}
+        />
+        {cuisines.map((c, i) => (
+          <Chip
+            key={i}
+            label={c}
+            onClick={() => { setSelectedCuisine(c); setCurrentIndex(0); }}
+            sx={{
+              bgcolor: selectedCuisine === c ? '#F72545' : 'rgba(255,255,255,0.07)',
+              color: '#F8FAFC',
+              fontWeight: 500,
+              flexShrink: 0,
+              border: selectedCuisine === c ? 'none' : '1px solid rgba(255,255,255,0.12)',
+              '&:hover': { bgcolor: selectedCuisine === c ? '#d41e38' : 'rgba(255,255,255,0.1)' },
+            }}
           />
-          <CardContent sx={{ bgcolor: '#fffaf6', textAlign: 'center' }}>
-            <Typography variant="h6" fontWeight="bold">
-              {dish.name}
-            </Typography>
-            <Stack direction="row" spacing={1} justifyContent="center" mt={1} flexWrap="wrap">
-              {dish.flavorTags.map((tag, idx) => (
-                <Chip
-                  key={idx}
-                  label={tag}
-                  size="small"
-                  sx={{ bgcolor: '#D5C4A1', fontWeight: 500 }}
-                />
-              ))}
-            </Stack>
-          </CardContent>
-        </Card>
-      </motion.div>
+        ))}
+      </Box>
 
-      <Stack direction="row" spacing={5}>
-        <IconButton
-          onClick={() => handleSwipe('left')}
-          sx={{ bgcolor: '#fff', width: 64, height: 64 }}
-        >
-          <CloseIcon fontSize="large" sx={{ color: '#D35400' }} />
-        </IconButton>
-        <IconButton
-          onClick={() => handleSwipe('right')}
-          sx={{ bgcolor: '#D35400', width: 64, height: 64 }}
-        >
-          <FavoriteIcon fontSize="large" sx={{ color: '#fff' }} />
-        </IconButton>
-      </Stack>
+      {/* Card area */}
+      <Box
+        {...handlers}
+        sx={{ width: '100%', maxWidth: 420, display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+      >
+        {dishes.length === 0 ? (
+          <Typography color="#64748B" mt={10}>Loading dishes...</Typography>
+        ) : currentIndex >= filteredDishes.length ? (
+          <Box textAlign="center" mt={10}>
+            <Typography variant="h6" color="#F8FAFC" mb={1}>You're all caught up!</Typography>
+            <Typography variant="body2" color="#64748B">Check your matches or try a different filter.</Typography>
+          </Box>
+        ) : (
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={dish.id}
+              initial={{ opacity: 0, scale: 0.93, y: 14 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{
+                x: swipeDirRef.current === 'right' ? 300 : -300,
+                opacity: 0,
+                rotate: swipeDirRef.current === 'right' ? 12 : -12,
+              }}
+              transition={{ duration: 0.28, ease: 'easeOut' }}
+              style={{ width: '100%' }}
+            >
+              <Box
+                sx={{
+                  width: '100%',
+                  borderRadius: 4,
+                  overflow: 'hidden',
+                  position: 'relative',
+                  bgcolor: '#1F2937',
+                  boxShadow: '0 8px 40px rgba(0,0,0,0.6)',
+                }}
+              >
+                {/* Image */}
+                <Box
+                  sx={{
+                    height: 400,
+                    backgroundImage: `url(${dish.imageUrl})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    bgcolor: '#1F2937',
+                  }}
+                />
+                {/* Gradient overlay */}
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    height: '65%',
+                    background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 55%, transparent 100%)',
+                  }}
+                />
+                {/* Text */}
+                <Box sx={{ position: 'absolute', bottom: 0, left: 0, right: 0, p: 3 }}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: '#FF9F1C',
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      letterSpacing: 1.2,
+                      fontSize: '0.68rem',
+                      display: 'block',
+                      mb: 0.5,
+                    }}
+                  >
+                    {dish.category}
+                  </Typography>
+                  <Typography variant="h5" fontWeight="bold" color="#F8FAFC" mb={1}>
+                    {dish.name}
+                  </Typography>
+                  <Stack direction="row" spacing={0.5} flexWrap="wrap" gap={0.5}>
+                    {dish.flavorTags.map((tag, idx) => (
+                      <Chip
+                        key={idx}
+                        label={tag}
+                        size="small"
+                        sx={{
+                          bgcolor: 'rgba(247,37,69,0.7)',
+                          color: '#F8FAFC',
+                          fontWeight: 500,
+                          fontSize: '0.68rem',
+                        }}
+                      />
+                    ))}
+                  </Stack>
+                </Box>
+              </Box>
+            </motion.div>
+          </AnimatePresence>
+        )}
+      </Box>
+
+      {/* Action buttons */}
+      {dish && currentIndex < filteredDishes.length && (
+        <Stack direction="row" spacing={5} mt={3} alignItems="center">
+          <Box textAlign="center">
+            <IconButton
+              onClick={() => handleSwipe('left')}
+              disabled={isAnimating}
+              sx={{
+                bgcolor: 'rgba(255,255,255,0.06)',
+                border: '2px solid rgba(255,255,255,0.1)',
+                width: 60,
+                height: 60,
+                '&:hover': { bgcolor: 'rgba(255,107,107,0.12)', borderColor: '#ff6b6b' },
+              }}
+            >
+              <CloseIcon fontSize="large" sx={{ color: '#ff6b6b' }} />
+            </IconButton>
+            <Typography variant="caption" color="#64748B" display="block" mt={0.5}>
+              Pass
+            </Typography>
+          </Box>
+
+          <Box textAlign="center">
+            <IconButton
+              onClick={() => handleSwipe('right')}
+              disabled={isAnimating}
+              sx={{
+                bgcolor: '#F72545',
+                width: 68,
+                height: 68,
+                boxShadow: '0 4px 24px rgba(247,37,69,0.5)',
+                '&:hover': { bgcolor: '#d41e38' },
+              }}
+            >
+              <FavoriteIcon fontSize="large" sx={{ color: '#fff' }} />
+            </IconButton>
+            <Typography variant="caption" color="#FFD166" display="block" mt={0.5} fontWeight="bold">
+              Like
+            </Typography>
+          </Box>
+        </Stack>
+      )}
     </Box>
   );
 }
