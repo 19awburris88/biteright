@@ -6,6 +6,27 @@ CraveCompass is a **mobile-only installable web app (PWA)**. On iPhone, open it 
 **Share → Add to Home Screen**. On Android, Chrome offers **Install app**. Desktop browsers get a
 "scan to open on your phone" screen.
 
+## Screens
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/screens/welcome.jpg" width="230" alt="Welcome" /><br /><sub><b>Welcome</b></sub></td>
+    <td align="center"><img src="docs/screens/onboarding.jpg" width="230" alt="Onboarding" /><br /><sub><b>Onboarding</b></sub></td>
+    <td align="center"><img src="docs/screens/discover.jpg" width="230" alt="Swipe deck" /><br /><sub><b>Swipe deck</b></sub></td>
+    <td align="center"><img src="docs/screens/unlocked.jpg" width="230" alt="Matches unlocked" /><br /><sub><b>Matches unlocked</b></sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screens/matches.jpg" width="230" alt="Ranked matches" /><br /><sub><b>Ranked matches</b></sub></td>
+    <td align="center"><img src="docs/screens/restaurant.jpg" width="230" alt="Restaurant" /><br /><sub><b>Restaurant</b></sub></td>
+    <td align="center"><img src="docs/screens/saved.jpg" width="230" alt="Saved" /><br /><sub><b>Saved</b></sub></td>
+    <td align="center"><img src="docs/screens/profile.jpg" width="230" alt="Taste profile" /><br /><sub><b>Taste profile</b></sub></td>
+  </tr>
+</table>
+
+On a computer, CraveCompass hands visitors off to their phone:
+
+<img src="docs/screens/desktop.jpg" width="720" alt="Desktop hand-off screen with QR code" />
+
 ## Features
 
 - **Swipe deck**: drag or tap to crave or pass. Your favorite cuisines lead the deck, dietary
