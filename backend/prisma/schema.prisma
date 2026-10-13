@@ -8,42 +8,48 @@ generator client {
 }
 
 model User {
-  id               Int      @id @default(autoincrement())
-  email            String   @unique
-  password         String
-  name             String?
-  zipcode          String
-  distanceRange    Int      @default(10)
-  pricePreference  String?
-  dietaryTags      String[]
-  swipes           Swipe[]
+  id                Int                @id @default(autoincrement())
+  email             String             @unique
+  password          String
+  name              String?
+  zipcode           String
+  distanceRange     Int                @default(10)
+  pricePreference   String?
+  dietaryTags       String[]
+  favoriteCategories String[]          @default([])
+  onboarded         Boolean            @default(false)
+  swipes            Swipe[]
+  saved             SavedRestaurant[]
   preferenceProfile PreferenceProfile?
-  createdAt        DateTime @default(now())
+  createdAt         DateTime           @default(now())
 }
 
 model Dish {
-  id          Int      @id @default(autoincrement())
-  name        String
-  category    String?
-  flavorTags  String[]
-  imageUrl    String?
+  id               Int              @id @default(autoincrement())
+  name             String
+  category         String?
+  flavorTags       String[]
+  dietary          String[]         @default([])
+  imageUrl         String?
   restaurantDishes RestaurantDish[]
-  swipes      Swipe[]
-  createdAt   DateTime @default(now())
+  swipes           Swipe[]
+  createdAt        DateTime         @default(now())
 }
 
 model Swipe {
-  id              Int      @id @default(autoincrement())
-  user            User     @relation(fields: [userId], references: [id])
-  userId          Int
-  dish            Dish     @relation(fields: [dishId], references: [id])
-  dishId          Int
-  swipeDirection  String
-  createdAt       DateTime @default(now())
+  id             Int      @id @default(autoincrement())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         Int
+  dish           Dish     @relation(fields: [dishId], references: [id], onDelete: Cascade)
+  dishId         Int
+  swipeDirection String
+  createdAt      DateTime @default(now())
+
+  @@unique([userId, dishId])
 }
 
 model Restaurant {
-  id               Int      @id @default(autoincrement())
+  id               Int               @id @default(autoincrement())
   name             String
   address          String
   zipcode          String
@@ -51,24 +57,42 @@ model Restaurant {
   phone            String?
   website          String?
   imageUrl         String?
-  cuisine          String?   // ✅ NEW FIELD
+  cuisine          String?
+  neighborhood     String?
+  categories       String[]          @default([])
+  dietary          String[]          @default([])
+  lat              Float?
+  lng              Float?
+  active           Boolean           @default(true)
   restaurantDishes RestaurantDish[]
-  createdAt        DateTime @default(now())
+  savedBy          SavedRestaurant[]
+  createdAt        DateTime          @default(now())
 }
 
 model RestaurantDish {
-  id             Int        @id @default(autoincrement())
-  restaurant     Restaurant @relation(fields: [restaurantId], references: [id])
-  restaurantId   Int
-  dish           Dish       @relation(fields: [dishId], references: [id])
-  dishId         Int
+  id           Int        @id @default(autoincrement())
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  restaurantId Int
+  dish         Dish       @relation(fields: [dishId], references: [id])
+  dishId       Int
+}
+
+model SavedRestaurant {
+  id           Int        @id @default(autoincrement())
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       Int
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  restaurantId Int
+  createdAt    DateTime   @default(now())
+
+  @@unique([userId, restaurantId])
 }
 
 model PreferenceProfile {
-  id               Int      @id @default(autoincrement())
-  user             User     @relation(fields: [userId], references: [id])
-  userId           Int      @unique
+  id                Int      @id @default(autoincrement())
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId            Int      @unique
   topDishCategories String[]
-  topFlavorTags    String[]
-  lastUpdated      DateTime @default(now())
+  topFlavorTags     String[]
+  lastUpdated       DateTime @default(now())
 }
