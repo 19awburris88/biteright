@@ -24,7 +24,7 @@
     "phone": "(317) 635-9594",
     "website": "https://www.harryandizzys.com",
     "priceLevel": "$$$",
-    "cuisine": "Upscale American Steakhouse",
+    "cuisine": "American Steakhouse",
     "neighborhood": "Downtown",
     "categories": [
       "Steak",
@@ -60,7 +60,7 @@
     "phone": "(317) 686-1580",
     "website": "https://bluebeardindy.com",
     "priceLevel": "$$",
-    "cuisine": "Farm-to-Table New American",
+    "cuisine": "Farm-to-Table",
     "neighborhood": "Fletcher Place",
     "categories": [
       "Italian"
@@ -166,7 +166,7 @@
     "phone": "(317) 924-4944",
     "website": "https://www.goosethemarket.com",
     "priceLevel": "$$",
-    "cuisine": "Butcher Shop & Sandwich Counter",
+    "cuisine": "Butcher & Sandwiches",
     "neighborhood": "Fall Creek Place",
     "categories": [
       "Sandwiches"
@@ -286,7 +286,7 @@
     "phone": "(317) 602-3702",
     "website": "https://sunkingbrewing.com/downtown-indianapolis-in",
     "priceLevel": null,
-    "cuisine": "Brewery Taproom (Mexican food by Nacho by La Margarita)",
+    "cuisine": "Brewery & Mexican",
     "neighborhood": "Downtown",
     "categories": [
       "Mexican"
@@ -393,7 +393,7 @@
     "phone": "(317) 925-1689",
     "website": null,
     "priceLevel": null,
-    "cuisine": "Smoked Brisket BBQ (carryout)",
+    "cuisine": "BBQ Carryout",
     "neighborhood": null,
     "categories": [
       "BBQ",
@@ -411,7 +411,7 @@
     "phone": "(317) 206-7122",
     "website": "https://www.doccrows.com/indianapolis",
     "priceLevel": "$$",
-    "cuisine": "Southern Smokehouse & Raw Bar",
+    "cuisine": "Smokehouse & Raw Bar",
     "neighborhood": "Downtown",
     "categories": [
       "BBQ",
@@ -448,7 +448,7 @@
     "phone": "(317) 550-4115",
     "website": "https://www.strangebirdindy.com",
     "priceLevel": "$$",
-    "cuisine": "Tiki Bar & Ramen (Shoyu Shop)",
+    "cuisine": "Tiki Bar & Ramen",
     "neighborhood": "Irvington",
     "categories": [
       "Japanese",

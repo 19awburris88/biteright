@@ -1,285 +1,218 @@
-import { useEffect, useState } from 'react';
-import {
-  Box,
-  Typography,
-  Stack,
-  Chip,
-  Card,
-  CardContent,
-  Button,
-  Divider,
-  CircularProgress,
-} from '@mui/material';
-import FavoriteIcon from '@mui/icons-material/Favorite';
-import RestaurantIcon from '@mui/icons-material/Restaurant';
-import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Box, Button, ButtonBase, Skeleton, Stack, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded';
+import NearMeRoundedIcon from '@mui/icons-material/NearMeRounded';
+import CloudOffRoundedIcon from '@mui/icons-material/CloudOffRounded';
+import RestaurantRoundedIcon from '@mui/icons-material/RestaurantRounded';
+import { Page, PageHeader, SectionTitle } from '../components/Page';
+import { TopMatchCard, RestaurantRow } from '../components/restaurant';
+import SignInGate from '../components/SignInGate';
+import EmptyState from '../components/EmptyState';
+import { api } from '../lib/api';
+import { guestSwipes } from '../lib/guest';
+import { cachedLocation, requestLocation, milesBetween, formatMiles } from '../lib/geo';
+import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
+import { c, shadow } from '../theme';
 
-const CATEGORY_EMOJI = {
-  BBQ: '🔥', Tacos: '🌮', Mexican: '🌶️', Sushi: '🍣', Japanese: '🍜',
-  Pizza: '🍕', Burgers: '🍔', Sandwiches: '🥪', Brunch: '🥞',
-  Salads: '🥗', Bowls: '🥣', Seafood: '🦞', Thai: '🍲', Vietnamese: '🍃',
-  Indian: '🫕', default: '🍽️',
-};
+const PRICE_FILTERS = ['', '$', '$$', '$$$'];
+const TASTE_COLORS = [c.brand, c.teal, '#E9A47E', '#8DB7B1'];
 
-function DishCard({ dish }) {
-  const emoji = CATEGORY_EMOJI[dish.category] || CATEGORY_EMOJI.default;
+function Pill({ active, onClick, children, icon }) {
   return (
-    <Card
+    <ButtonBase
+      onClick={onClick}
       sx={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 2,
-        p: 2,
-        bgcolor: '#1F2937',
-        borderRadius: 3,
-        border: '1px solid rgba(255,255,255,0.06)',
+        flexShrink: 0,
+        gap: 0.5,
+        px: 1.6,
+        height: 34,
+        borderRadius: 999,
+        fontWeight: 700,
+        fontSize: '0.84rem',
+        color: active ? '#fff' : c.muted,
+        bgcolor: active ? c.brand : c.surface,
+        border: `1px solid ${active ? c.brand : c.line}`,
+        transition: 'all .2s ease',
       }}
-      elevation={0}
     >
-      <Box
-        sx={{
-          width: 52,
-          height: 52,
-          borderRadius: 2,
-          bgcolor: 'rgba(247,37,69,0.12)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '1.4rem',
-          flexShrink: 0,
-        }}
-      >
-        {emoji}
-      </Box>
-      <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography variant="subtitle2" fontWeight="bold" color="#F8FAFC" noWrap>
-          {dish.name}
-        </Typography>
-        <Stack direction="row" spacing={0.5} mt={0.5} flexWrap="wrap" gap={0.5}>
-          {dish.flavorTags.slice(0, 2).map((tag, i) => (
-            <Chip
-              key={i}
-              label={tag}
-              size="small"
-              sx={{
-                bgcolor: 'rgba(255,159,28,0.1)',
-                color: '#FF9F1C',
-                fontSize: '0.65rem',
-                border: '1px solid rgba(255,159,28,0.2)',
-              }}
-            />
-          ))}
-        </Stack>
-      </Box>
-    </Card>
+      {icon}
+      {children}
+    </ButtonBase>
   );
 }
 
-function RestaurantCard({ restaurant }) {
+function TasteStrip({ taste }) {
+  const top = taste.categories.slice(0, 4);
   return (
-    <Card
-      sx={{
-        bgcolor: '#1F2937',
-        borderRadius: 3,
-        border: '1px solid rgba(255,255,255,0.06)',
-        overflow: 'hidden',
-      }}
-      elevation={0}
-    >
-      <Box
-        sx={{
-          height: 140,
-          backgroundImage: `url(${restaurant.imageUrl})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          bgcolor: '#1F2937',
-          display: 'flex',
-          alignItems: 'flex-end',
-        }}
-      >
-        <Box
-          sx={{
-            width: '100%',
-            p: 1.5,
-            background: 'linear-gradient(to top, rgba(0,0,0,0.85), transparent)',
-          }}
-        >
-          <Chip
-            label={restaurant.priceLevel}
-            size="small"
-            sx={{
-              bgcolor: 'rgba(247,37,69,0.8)',
-              color: '#fff',
-              fontWeight: 600,
-              fontSize: '0.7rem',
-            }}
+    <Box sx={{ p: 2, mb: 3, borderRadius: 5, bgcolor: c.surface, border: `1px solid ${c.line}`, boxShadow: shadow.card }}>
+      <Typography variant="overline" sx={{ color: c.muted }}>
+        Your taste right now
+      </Typography>
+      <Box sx={{ display: 'flex', height: 10, borderRadius: 9, overflow: 'hidden', my: 1.25, bgcolor: c.raised2 }}>
+        {top.map((cat, i) => (
+          <Box
+            key={cat.name}
+            sx={{ width: `${cat.share * 100}%`, bgcolor: TASTE_COLORS[i], transition: 'width .5s ease' }}
           />
-        </Box>
+        ))}
       </Box>
-      <CardContent sx={{ bgcolor: '#1F2937', p: 2 }}>
-        <Typography variant="subtitle1" fontWeight="bold" color="#F8FAFC">
-          {restaurant.name}
-        </Typography>
-        <Typography variant="body2" color="#64748B" mb={1.5}>
-          {restaurant.cuisine} · {restaurant.address}
-        </Typography>
-        {restaurant.website && (
-          <Button
-            href={restaurant.website}
-            target="_blank"
-            rel="noopener noreferrer"
-            size="small"
-            endIcon={<OpenInNewIcon sx={{ fontSize: '0.85rem' }} />}
-            sx={{
-              color: '#F72545',
-              fontWeight: 600,
-              p: 0,
-              minWidth: 0,
-              textTransform: 'none',
-              '&:hover': { bgcolor: 'transparent', color: '#FF9F1C' },
-            }}
-          >
-            Visit website
-          </Button>
-        )}
-      </CardContent>
-    </Card>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', columnGap: 2, rowGap: 0.5 }}>
+        {top.map((cat, i) => (
+          <Box key={cat.name} sx={{ display: 'flex', alignItems: 'center', gap: 0.75, fontSize: '0.82rem', fontWeight: 700 }}>
+            <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: TASTE_COLORS[i] }} />
+            {cat.name}
+            <Box component="span" sx={{ color: c.faint }}>{Math.round(cat.share * 100)}%</Box>
+          </Box>
+        ))}
+      </Box>
+    </Box>
   );
 }
 
 export default function Matches() {
+  const { user } = useAuth();
+  const toast = useToast();
   const navigate = useNavigate();
-  const userId = localStorage.getItem('biteright_user_id');
-  const [likedDishes, setLikedDishes] = useState([]);
-  const [restaurants, setRestaurants] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState(null);
+  const [error, setError] = useState(null);
+  const [price, setPrice] = useState('');
+  const [sort, setSort] = useState('match');
+  const [location, setLocation] = useState(cachedLocation());
+  const [locating, setLocating] = useState(false);
+
+  const load = useCallback(() => {
+    setError(null);
+    api('/restaurants/matches')
+      .then(setData)
+      .catch((err) => setError(err));
+  }, []);
 
   useEffect(() => {
-    async function fetchData() {
-      try {
-        const [swipesRes, restaurantsRes] = await Promise.all([
-          userId
-            ? fetch(`/api/swipes?userId=${userId}&direction=right`)
-            : Promise.resolve({ json: () => [] }),
-          fetch(`/api/restaurants/matches${userId ? `?userId=${userId}` : ''}`),
-        ]);
+    if (user) load();
+  }, [user, load]);
 
-        const swipes = await (userId ? swipesRes.json() : Promise.resolve([]));
-        const rests = await restaurantsRes.json();
-
-        setLikedDishes(Array.isArray(swipes) ? swipes.map((s) => s.dish) : []);
-        setRestaurants(Array.isArray(rests) ? rests : []);
-      } catch (err) {
-        console.error('Error fetching matches:', err);
-      } finally {
-        setLoading(false);
-      }
+  const sortNearest = async () => {
+    if (sort === 'near') return setSort('match');
+    if (location) return setSort('near');
+    setLocating(true);
+    try {
+      setLocation(await requestLocation());
+      setSort('near');
+    } catch (err) {
+      toast(err.message);
+    } finally {
+      setLocating(false);
     }
-    fetchData();
-  }, [userId]);
+  };
+
+  const list = useMemo(() => {
+    if (!data?.matches) return [];
+    const rows = data.matches
+      .filter((r) => !price || r.priceLevel === price)
+      .map((r) => ({ ...r, miles: milesBetween(location, r) }));
+    if (sort === 'near') rows.sort((a, b) => (a.miles ?? 1e9) - (b.miles ?? 1e9));
+    return rows;
+  }, [data, price, sort, location]);
+
+  if (!user) {
+    const liked = guestSwipes.likes().length;
+    return (
+      <Page>
+        <PageHeader eyebrow="Matches" title="Your matches" />
+        <SignInGate
+          icon={<AutoAwesomeRoundedIcon />}
+          title={liked ? `You’ve craved ${liked} dish${liked === 1 ? '' : 'es'}` : 'Matches made for you'}
+          body="Create a free account and we’ll rank Indianapolis restaurants by how well they fit your taste. Your swipes come with you."
+        />
+      </Page>
+    );
+  }
+
+  const [first, ...rest] = list;
 
   return (
-    <Box sx={{ bgcolor: '#0d0d0d', minHeight: '100vh', px: 2.5, pt: 4, pb: 12 }}>
-      <Box mb={3}>
-        <Typography variant="h5" fontWeight="bold" color="#FF9F1C">
-          Matches
-        </Typography>
-        <Typography variant="body2" color="#64748B">
-          Dishes you loved and places to try
-        </Typography>
-      </Box>
+    <Page>
+      <PageHeader eyebrow="Matches" title="Made for you" subtitle="Indianapolis restaurants ranked by your taste." />
 
-      {loading ? (
-        <Box display="flex" justifyContent="center" mt={10}>
-          <CircularProgress sx={{ color: '#F72545' }} />
-        </Box>
-      ) : (
+      {error && (
+        <EmptyState
+          icon={<CloudOffRoundedIcon />}
+          title={error.status === 0 ? 'You’re offline' : 'Couldn’t load matches'}
+          body={error.message}
+          action={<Button variant="contained" onClick={load}>Try again</Button>}
+        />
+      )}
+
+      {!error && !data && (
+        <Stack spacing={1.5}>
+          <Skeleton variant="rounded" height={86} sx={{ borderRadius: 5 }} />
+          <Skeleton variant="rounded" height={300} sx={{ borderRadius: 6 }} />
+          <Skeleton variant="rounded" height={114} sx={{ borderRadius: 5 }} />
+        </Stack>
+      )}
+
+      {data?.locked && (
+        <EmptyState
+          icon={<AutoAwesomeRoundedIcon />}
+          title={`Crave ${data.likesNeeded} more dish${data.likesNeeded === 1 ? '' : 'es'}`}
+          body="Swipe right on a few dishes you love and we’ll start matching you with restaurants."
+          action={<Button variant="contained" onClick={() => navigate('/discover')}>Start swiping</Button>}
+        />
+      )}
+
+      {data && !data.locked && (
         <>
-          {/* Liked Dishes */}
-          <Box mb={4}>
-            <Stack direction="row" alignItems="center" spacing={1} mb={2}>
-              <FavoriteIcon sx={{ color: '#F72545', fontSize: '1rem' }} />
-              <Typography variant="subtitle1" fontWeight="bold" color="#F8FAFC">
-                Dishes You Liked
-              </Typography>
-              {likedDishes.length > 0 && (
-                <Chip
-                  label={likedDishes.length}
-                  size="small"
-                  sx={{
-                    bgcolor: '#F72545',
-                    color: '#fff',
-                    fontWeight: 700,
-                    height: 20,
-                    fontSize: '0.7rem',
-                  }}
-                />
+          <TasteStrip taste={data.taste} />
+
+          <Box className="no-scrollbar" sx={{ display: 'flex', gap: 1, overflowX: 'auto', mb: 2.5, mx: -2.5, px: 2.5 }}>
+            <Pill
+              active={sort === 'near'}
+              onClick={sortNearest}
+              icon={<NearMeRoundedIcon sx={{ fontSize: 15 }} />}
+            >
+              {locating ? 'Locating…' : 'Nearest'}
+            </Pill>
+            <Box sx={{ width: '1px', bgcolor: c.line, flexShrink: 0, my: 0.5 }} />
+            {PRICE_FILTERS.map((p) => (
+              <Pill key={p || 'any'} active={price === p} onClick={() => setPrice(p)}>
+                {p || 'Any price'}
+              </Pill>
+            ))}
+          </Box>
+
+          {list.length === 0 ? (
+            <EmptyState
+              icon={<RestaurantRoundedIcon />}
+              title="No matches at this price"
+              body="Try another price range, or keep swiping to broaden your taste."
+              action={<Button variant="outlined" onClick={() => setPrice('')}>Show all prices</Button>}
+            />
+          ) : (
+            <>
+              <TopMatchCard restaurant={first} distance={formatMiles(first.miles)} />
+              {rest.length > 0 && (
+                <Box sx={{ mt: 3.5 }}>
+                  <SectionTitle>
+                    {sort === 'near' ? 'Closest to you' : 'More great fits'}{' '}
+                    <Box component="span" sx={{ color: c.faint, fontWeight: 700 }}>{rest.length}</Box>
+                  </SectionTitle>
+                  <Stack spacing={1.25}>
+                    {rest.map((r) => (
+                      <RestaurantRow key={r.id} restaurant={r} distance={formatMiles(r.miles)} />
+                    ))}
+                  </Stack>
+                </Box>
               )}
-            </Stack>
+            </>
+          )}
 
-            {likedDishes.length === 0 ? (
-              <Box
-                sx={{
-                  bgcolor: '#1F2937',
-                  borderRadius: 3,
-                  p: 3,
-                  textAlign: 'center',
-                  border: '1px dashed rgba(255,255,255,0.08)',
-                }}
-              >
-                <Typography variant="body2" color="#64748B" mb={1.5}>
-                  No likes yet — start swiping to build your taste profile.
-                </Typography>
-                <Button
-                  variant="contained"
-                  size="small"
-                  onClick={() => navigate('/swipe')}
-                  sx={{
-                    bgcolor: '#F72545',
-                    '&:hover': { bgcolor: '#d41e38' },
-                    fontWeight: 600,
-                    borderRadius: 2,
-                    boxShadow: '0 2px 12px rgba(247,37,69,0.3)',
-                  }}
-                >
-                  Start Swiping
-                </Button>
-              </Box>
-            ) : (
-              <Stack spacing={1.5}>
-                {likedDishes.map((dish, i) => (
-                  <DishCard key={i} dish={dish} />
-                ))}
-              </Stack>
-            )}
-          </Box>
-
-          <Divider sx={{ borderColor: 'rgba(255,255,255,0.06)', mb: 4 }} />
-
-          {/* Recommended Restaurants */}
-          <Box>
-            <Stack direction="row" alignItems="center" spacing={1} mb={2}>
-              <RestaurantIcon sx={{ color: '#F4B942', fontSize: '1rem' }} />
-              <Typography variant="subtitle1" fontWeight="bold" color="#F8FAFC">
-                {likedDishes.length > 0 ? 'Restaurants for You' : 'Recommended Restaurants'}
-              </Typography>
-            </Stack>
-
-            {restaurants.length === 0 ? (
-              <Typography variant="body2" color="#64748B" textAlign="center" mt={2}>
-                No restaurants found.
-              </Typography>
-            ) : (
-              <Stack spacing={2}>
-                {restaurants.map((r, i) => (
-                  <RestaurantCard key={i} restaurant={r} />
-                ))}
-              </Stack>
-            )}
-          </Box>
+          <Typography sx={{ color: c.faint, fontSize: '0.75rem', textAlign: 'center', mt: 4 }}>
+            Photos are representative of each restaurant’s cuisine.
+          </Typography>
         </>
       )}
-    </Box>
+    </Page>
   );
 }

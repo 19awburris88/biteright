@@ -10,7 +10,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "postinstall": "prisma generate --schema=backend/prisma/schema.prisma",
-    "db:migrate": "prisma migrate deploy --schema=backend/prisma/schema.prisma",
+    "db:migrate": "node backend/migrate.js",
     "db:seed": "node backend/seed.js",
     "start": "npm run db:migrate && npm run db:seed && node backend/index.js"
   },

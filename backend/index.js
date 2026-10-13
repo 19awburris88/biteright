@@ -80,10 +80,9 @@ if (isProduction) {
     res.sendFile(path.join(distPath, 'index.html'));
   });
 } else {
-  app.get('/', (_req, res) => res.send('BiteRight API is running — open the Vite dev server for the app.'));
+  app.get('/', (_req, res) => res.send('CraveCompass API is running — open the Vite dev server for the app.'));
 }
 
-// eslint-disable-next-line no-unused-vars
 app.use((err, _req, res, _next) => {
   console.error('[unhandled]', err);
   res.status(err.status || 500).json({ error: err.status === 400 ? 'Bad request.' : 'Something went wrong.' });
@@ -91,5 +90,5 @@ app.use((err, _req, res, _next) => {
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-  console.log(`🚀 BiteRight API on http://localhost:${PORT}`);
+  console.log(`🚀 CraveCompass API on http://localhost:${PORT}`);
 });
